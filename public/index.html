@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Todo App</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.5.0/ui-bootstrap-tpls.min.js"></script>
+</head>
+<body ng-app="myapp">
+<div class="container">
+<div  ng-controller="myCtrl">
+    <h1>Todo App</h1>
+ <input type="text" ng-model="newtodo">
+<button class="btn btn-success" ng-click="createTodo()">Add</button>
+
+    <hr>
+    <table class="table table-hover">
+        <thead>
+        <tr> <td> Todo Id</td>
+        <td>Todo Title</td>
+            <td>&nbsp;</td>
+
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="todo in todoslist">
+           <td>{{todo.id}}</td>
+            <td>{{todo.title}}</td>
+
+            <td><button class="btn btn-danger" ng-click="delete($index)">Delete</button></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p ng-show="message">{{message}}</p>
+</div>
+</div>
+<script>
+    var myapp=angular.module('myapp', ['ui.bootstrap']);
+    myapp.controller('myCtrl', function($scope,$http){
+        $scope.todoslist = [];
+       $scope.newtodo ="";
+        $scope.message="";
+        function init(){
+            $http.get('/api/todos').then(function(response){
+                $scope.todoslist = response.data;
+                        console.log('no of todo records in database :' + $scope.todoslist.length);
+            },
+                    function(data,status,headers,config){
+                        $scope.message = "An error occured while trying to fetch records from database";
+                    });
+        }
+        init();
+        $scope.delete = function(index){
+
+            $http.delete('/api/todos/' + $scope.todoslist[index].id).then(function(res){
+               $scope.message = res.data.message;
+                        init();
+            },
+                    function(data,status,headers,config){
+                    $scope.message = "An error occured while trying to delete the record from Database";
+            });
+
+        };
+        $scope.createTodo = function(){
+            console.log('sending post request'+ $scope.newtodo);
+            $http.post('/api/todos', {title:$scope.newtodo}).then(function(res){
+              $scope.message = res.data.message;
+                        init();
+            },
+            function(data,status,headers,config){
+                $scope.message ="An Error occured at the Server while trying to update";
+
+            });
+        };
+    });
+
+</script>
+</body>
+</html>
